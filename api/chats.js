@@ -4,6 +4,7 @@ const ChatModel = require("../models/ChatModel");
 const UserModel = require("../models/UserModel");
 const authMiddleware = require("../middleware/authMiddleware");
 
+
 // GET ALL CHATS
 
 router.get("/", authMiddleware, async (req, res) => {
@@ -30,6 +31,7 @@ router.get("/", authMiddleware, async (req, res) => {
     return res.status(500).send("Server Error");
   }
 });
+
 
 // GET USER INFO
 
@@ -79,5 +81,28 @@ router.delete(`/:messagesWith`, authMiddleware, async (req, res) => {
     return res.status(500).send("Server Error");
   }
 });
+
+// Send image and video
+
+router.get("/:messagesWith/image/:imageId", authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req;
+    const { messagesWith, imageId } = req.params;
+    const user = await ChatModel.findOne({user: userId});
+    const chatToSend = user.chats.find(chat => chat.messagesWith.toString() === messagesWith);
+    if (!chatToSend) {
+      return res.status(404).send("Chat not found");
+    }
+    const image = chatToSend.messages.find(message => message.imageId === imageId);
+    if (!image) {
+      return res.status(404).send("Image not found");
+    }
+    return res.sendFile(image.imageUrl);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send("Server Error");
+  }
+});
+
 
 module.exports = router;
